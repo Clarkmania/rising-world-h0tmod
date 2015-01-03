@@ -5,15 +5,15 @@ include("support.lua")
 
 include("modmanager.lua")
 
-include("testmod.lua")
+include("mods/WelcomeMessage.lua")
 
 ModManager:init()
-mod = TestMod.new()
-mod:attach(ModManager)
+WelcomeMessage = modWelcomeMessage.new()
+WelcomeMessage:attach(ModManager)
 
 -- invoked by java
 function onEnable ()
-	log("onEnable begin")
+	dlog("onEnable begin")
 	ModManager:list()
-	log("onEnable end")
+	dlog("onEnable end")
 end

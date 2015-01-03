@@ -15,6 +15,12 @@ log = function (...)
 	end
 end
 
+debug = function (...)
+	if _G['debugEnabled'] then
+		log(...)
+	end
+end
+
 -- look for value in first level
 in_array = function (tb, value)
 	for k,v in pairs(tb) do

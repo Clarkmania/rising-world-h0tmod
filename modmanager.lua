@@ -53,12 +53,12 @@ ModManager = {
 	_eventProxy = {},
 
 	init = function(self)
-		self:log("init mod manager (does nothing yet)")
+		self:log("Init (does nothing yet)")
 	end,
 
 	list = function(self)
 		for _,v in pairs(self.plugins) do
-			self:log("%s %d", v.name, v.version)
+			self:log("%s version %f", v.name, v.version)
 		end
 	end,
 
@@ -70,7 +70,7 @@ ModManager = {
 			end
 		end
 		if plugin:register(self) then
-			self:log("register success")
+			self:dlog("register success")
 			table.insert(self.plugins, plugin)
 		end
 	end,
@@ -80,7 +80,7 @@ ModManager = {
 			if v == plugin then
 				if plugin:unregister(self) then
 					table.remove(self.plugins, k)
-					self:log("unregister success")
+					self:dlog("unregister success")
 				end
 				return true
 			end
@@ -90,23 +90,23 @@ ModManager = {
 
 	hook = function(self,params)
 		if not in_array(EVENTS, params.event) then
-			self:log("unknown event hook %s", params.event)
+			self:log("Unknown event hook %s", params.event)
 			return false
 		end
 
 		if not self.hooks[params.event] then
-			-- FIXME: eventname deref
 			local eventname = params.event
-			self._eventProxy[eventname] = function(self,event) self.hookEvents(self, eventname, event) end
+			self._eventProxy[eventname] = function(event) ModManager:hookEvents(eventname, event) end
 			self.hooks[params.event]={}
 
-			if not addEvent(params.event, self._eventProxy[eventnamt]) then
+			if not addEvent(params.event, self._eventProxy[eventname]) then
 				self:log("hook failed: %s", params.event)
 				return false
 			end
 		end
 		table.insert(self.hooks[params.event], params.callback)
-		self:log("hooked: %s", params.event)
+		self:dlog("hooked: %s", params.event)
+		return true
 	end,
 
 	unhook = function(self,params)
@@ -114,7 +114,7 @@ ModManager = {
 			for i = #self.hooks[params.event],1,-1 do
 				if self.hooks[params.event][i] == params.callback then
 					table.remove(self.hooks[params.event], i)
-					self:log("unhooked: %s", params.event)
+					self:dlog("unhooked: %s", params.event)
 					break
 				end
 			end
@@ -122,13 +122,23 @@ ModManager = {
 	end,
 
 	hookEvents = function(self,name,event)
-		self:log("handling event %s", name)
+		if type(self.hooks[name]) == "table" then
+			for _,v in pairs(self.hooks[name]) do
+				v(event)
+			end
+		end
 	end,
 
 	log = function(self,...)
 		local arg = table.pack(...)
 		arg[1] = "ModManager: " .. arg[1]
 		log(table.unpack(arg))
+	end,
+
+	dlog = function(self,...)
+		if _G['debugEnabled'] then
+			self:log(...)
+		end
 	end
 }
 
@@ -143,9 +153,9 @@ ModBase = {
 		}
 
 		self.attach = function(self,modmanager)
-			self:log('attach begin')
+			self:dlog('attach begin')
 			local x = modmanager:register(self)
-			self:log('attach end')
+			self:dlog('attach end')
 			return x
 		end
 
@@ -154,7 +164,7 @@ ModBase = {
 		end
 
 		self.register = function(self,modmanager)
-			self:log('register begin')
+			self:dlog('register begin')
 			local x = true
 			for k,v in pairs(self.events) do
 				if not modmanager:hook{event=k,callback=v} then
@@ -162,16 +172,16 @@ ModBase = {
 					break
 				end
 			end
-			self:log('register end')
+			self:dlog('register end')
 			return x
 		end
 
 		self.unregister = function(self,modmanager)
-			self:log('unregister begin')
+			self:dlog('unregister begin')
 			for k,v in pairs(self.events) do
 				modmanager:unhook{event=k,callback=v}
 			end
-			self:log('unregister end')
+			self:dlog('unregister end')
 			return true
 		end
 
@@ -179,6 +189,12 @@ ModBase = {
 			local arg = table.pack(...)
 			arg[1] = self.name .. ": " .. arg[1]
 			log(table.unpack(arg))
+		end
+
+		self.dlog = function(self,...)
+			if _G['debugEnabled'] then
+				self:log(...)
+			end
 		end
 
 		return self

@@ -6,10 +6,14 @@ include("support.lua")
 include("modmanager.lua")
 
 include("mods/WelcomeMessage.lua")
+include("mods/Motd.lua")
 
 ModManager:init()
 WelcomeMessage = modWelcomeMessage.new()
 WelcomeMessage:attach(ModManager)
+
+Motd = modMotd.new()
+Motd:attach(ModManager)
 
 -- invoked by java
 function onEnable ()

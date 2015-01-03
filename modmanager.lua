@@ -1,6 +1,9 @@
 -- Copyright (c) 2014, Jeffrey Clark. This file is licensed under the
 -- Affero General Public License version 3 or later. See the COPYRIGHT file.
 
+db = getDatabase()
+server = getServer()
+
 EVENTS = {
 	"ChestItemDrop",
 	"ChestToInventory",
@@ -48,7 +51,6 @@ EVENTS = {
 
 ModManager = {
 	hooks = {},
-	commands = {},
 	plugins = {},
 	_eventProxy = {},
 
@@ -96,7 +98,7 @@ ModManager = {
 
 		if not self.hooks[params.event] then
 			local eventname = params.event
-			self._eventProxy[eventname] = function(event) ModManager:hookEvents(eventname, event) end
+			self._eventProxy[eventname] = function(event) ModManager:callEvents(eventname, event) end
 			self.hooks[params.event]={}
 
 			if not addEvent(params.event, self._eventProxy[eventname]) then
@@ -121,10 +123,28 @@ ModManager = {
 		end
 	end,
 
-	hookEvents = function(self,name,event)
+	addTimer = function(self,name,timer)
+		local x = setTimer(timer.callback, timer.frequency, timer.count)
+		timer.id = x
+		return true
+	end,
+
+	removeTimer = function(self,name,timer)
+		return (killTimer(timer.id) == nil)
+	end,
+
+	callEvents = function(self,name,event)
 		if type(self.hooks[name]) == "table" then
+			-- parse the command
+			local extra = {}
+			if name == "PlayerCommand" then
+				if string.sub(event.command,1,1) == "/" then
+					extra = explode(" ", event.command, 2)
+					extra[1] = string.sub(string.lower(extra[1]), 2)
+				end
+			end
 			for _,v in pairs(self.hooks[name]) do
-				v(event)
+				v(event, table.unpack(extra))
 			end
 		end
 	end,
@@ -150,17 +170,23 @@ ModBase = {
 			author = "Unknown",
 			version = 0,
 			events = {},
+			timers = {},
+			commands = {},
+			manager = nil,
 		}
 
 		self.attach = function(self,modmanager)
 			self:dlog('attach begin')
 			local x = modmanager:register(self)
 			self:dlog('attach end')
+			if x then self.manager = modmanager end
 			return x
 		end
 
 		self.detach = function(self,modmanager)
-			return modmanager:unregister(self)
+			local x = modmanager:unregister(self)
+			if x then self.manager = nil end
+			return x
 		end
 
 		self.register = function(self,modmanager)
@@ -172,6 +198,15 @@ ModBase = {
 					break
 				end
 			end
+			if x then
+				for k,v in pairs(self.timers) do
+					if not modmanager:addTimer(k, v) then
+						-- FIXME: unhook also
+						x = false
+						break
+					end
+				end
+			end
 			self:dlog('register end')
 			return x
 		end
@@ -180,6 +215,9 @@ ModBase = {
 			self:dlog('unregister begin')
 			for k,v in pairs(self.events) do
 				modmanager:unhook{event=k,callback=v}
+			end
+			for k,v in pairs(self.timers) do
+				modmanager:removeTimer(k, v)
 			end
 			self:dlog('unregister end')
 			return true

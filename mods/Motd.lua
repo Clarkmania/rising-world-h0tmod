@@ -41,6 +41,7 @@ modMotd = {
 					self:broadcastMotd()
 				elseif action == "list" then
 					-- TODO
+					ModManager:sendPlayerCommandHelp(event.player, command, "list not implemented yet")
 				elseif action == "set" and message then
 					db:queryupdate("INSERT INTO motd (time, message) VALUES (strftime('%s', 'now'), '" .. message .. "')")
 					event.player:sendTextMessage("motd set")

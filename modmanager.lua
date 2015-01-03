@@ -144,7 +144,28 @@ ModManager = {
 				end
 			end
 			for _,v in pairs(self.hooks[name]) do
-				v(event, table.unpack(extra))
+				-- If callback successful, stop looping for more hooks
+				if v.callback(event, table.unpack(extra)) then
+					break
+				end
+			end
+		end
+	end,
+
+	sendPlayerCommandHelp = function(self,player,text)
+		if type(text) == "table" then
+			for _,v in ipairs(text) do
+				player:sendTextMessage("[#00A5A5]> " .. v)
+			end
+		else
+			player:sendTextMessage("[#00A5A5]> " .. text)
+		end
+	end,
+
+	sendPlayerCommandList = function(self,player,commandlist)
+		for v,_ in pairs(commandlist) do
+			if v ~= "help" then
+				player:sendTextMessage("[#00A5A5]> " .. v)
 			end
 		end
 	end,
@@ -169,10 +190,36 @@ ModBase = {
 			name = "Unknown",
 			author = "Unknown",
 			version = 0,
-			events = {},
 			timers = {},
-			commands = {},
 			manager = nil,
+		}
+
+		-- Default help command processor
+		self.commands = {
+			help = {
+				callback = function(event, command, ...)
+					if command then
+						if self.commands[command] and self.commands[command]['help'] then
+							ModManager:sendPlayerCommandHelp(event.player, self.commands[command].help)
+							-- Tell ModManager the command request has been fulfilled
+							return true
+						end
+					else
+						ModManager:sendPlayerCommandList(event.player, self.commands)
+					end
+				end,
+			},
+		}
+
+		-- Default event handler for help command
+		self.events = {
+			PlayerCommand = {
+				callback = function(event, command, ...)
+					if self.commands[command] then
+						self.commands[command].callback(event, ...)
+					end
+				end,
+			}
 		}
 
 		self.attach = function(self,modmanager)

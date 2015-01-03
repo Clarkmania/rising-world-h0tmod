@@ -30,36 +30,30 @@ modMotd = {
 			return motd
 		end
 
-		self.commands = {
-			setmotd = function(event, message, ...)
+		self.commands['setmotd'] = {
+			callback = function(event, message, ...)
 				db:queryupdate("INSERT INTO motd (time, message) VALUES (strftime('%s', 'now'), '" .. message .. "')")
 				event.player:sendTextMessage("motd set")
 			end,
-
-			help = function(event, command, ...)
-				event.player:sendTextMessage("/setmotd")
-			end
+			help = {
+				"/setmotd <message>"
+			}
 		}
 
-		self.timers = {
+		self.timers['motd'] = {
 			-- Broadcast motd every 60 minutes, forever
-			motd = { frequency = 3600, count = -1, callback = function() self:broadcastMotd() end },
+			frequency = 3600,
+			count = -1,
+			callback = function() self:broadcastMotd() end
 		}
 
-		self.events = {
-			PlayerSpawn = function(event)
+		self.events['PlayerSpawn'] = {
+			callback = function(event)
 				local motd = self:getMotd()
 				if motd.time > 0 then
 					event.player:sendTextMessage("[#FFA500]** ".. motd.message)
 				end
 			end,
-
-			PlayerCommand = function(event, command, ...)
-				if self.commands[command] then
-					self.commands[command](event, ...)
-				end
-			end,
-
 		}
 
 		return self

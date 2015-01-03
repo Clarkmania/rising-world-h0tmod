@@ -9,6 +9,7 @@ include("mods/WelcomeMessage.lua")
 include("mods/Motd.lua")
 
 ModManager:init()
+
 WelcomeMessage = modWelcomeMessage.new()
 WelcomeMessage:attach(ModManager)
 

@@ -10,10 +10,14 @@ modWelcomeMessage = {
 
 		self.restart = os.time()
 
+		-- Override inherited command/event - not needed for this mod
+		self.commands = {}
 		self.events = {
-			PlayerSpawn = function(event)
-				event.player:sendTextMessage(string.format("[#00FFCC]Welcome to the server %s! Last restart was %s.", event.player:getPlayerName(), os.date("%x %X", self.restart)))
-			end
+			PlayerSpawn = {
+				callback = function(event)
+					event.player:sendTextMessage(string.format("[#00FFCC]Welcome to the server %s! Last restart was %s.", event.player:getPlayerName(), os.date("%x %X", self.restart)))
+				end
+			}
 		}
 
 		return self

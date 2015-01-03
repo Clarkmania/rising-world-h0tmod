@@ -12,14 +12,17 @@ modMotd = {
 		db:queryupdate("CREATE TABLE IF NOT EXISTS `motd` (`ID` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `time` INTEGER, `message` VARCHAR);");
 
 		self.broadcastMotd = function(self)
-			local motd = self:getMotd()
-			if motd.time > 0 then
-				server:brodcastTextMessage("[#FFA500]** ".. motd.message)
-			end
+			server:brodcastTextMessage(self:prettyMotd())
+		end
+
+		self.prettyMotd = function(self, motd)
+			if not motd then motd = self:getMotd() end
+			return string.format("[#FFA500]** %s -- %s", motd.message, os.date("%x %X", motd.time))
 		end
 
 		self.getMotd = function(self)
-			local motd = { time = 0 }
+			-- TODO: cache result
+			local motd = { time = 0, message = "No message of the day" }
     			result = db:query("SELECT * FROM motd ORDER BY time DESC LIMIT 1;")
 			if result:next() then
 				motd.time = result:getInt("time")
@@ -30,17 +33,31 @@ modMotd = {
 			return motd
 		end
 
-		self.commands['setmotd'] = {
-			callback = function(event, message, ...)
-				db:queryupdate("INSERT INTO motd (time, message) VALUES (strftime('%s', 'now'), '" .. message .. "')")
-				event.player:sendTextMessage("motd set")
+		self.commands['motd'] = {
+			callback = function(event, command, action, message)
+				if not action then
+					event.player:sendTextMessage(self:prettyMotd())
+				elseif action == "broadcast" then
+					self:broadcastMotd()
+				elseif action == "list" then
+					-- TODO
+				elseif action == "set" and message then
+					db:queryupdate("INSERT INTO motd (time, message) VALUES (strftime('%s', 'now'), '" .. message .. "')")
+					event.player:sendTextMessage("motd set")
+				else
+					ModManager:sendPlayerCommandHelp(event.player, command, "Invalid command usage, see /help " .. command)
+				end
+				return true
 			end,
 			help = {
-				"<message>"
+				"set <message>",
+				"broadcast => send motd to all players",
+				"list      => show last 5 messages",
+				"          => show motd",
 			}
 		}
 
-		self.timers['motd'] = {
+		self.timers['Broadcast'] = {
 			-- Broadcast motd every 60 minutes, forever
 			frequency = 3600,
 			count = -1,
@@ -49,10 +66,7 @@ modMotd = {
 
 		self.events['PlayerSpawn'] = {
 			callback = function(event)
-				local motd = self:getMotd()
-				if motd.time > 0 then
-					event.player:sendTextMessage("[#FFA500]** ".. motd.message)
-				end
+				event.player:sendTextMessage(self:prettyMotd())
 			end,
 		}
 

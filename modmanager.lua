@@ -139,12 +139,13 @@ ModManager = {
 			local extra = {}
 			if name == "PlayerCommand" then
 				if string.sub(event.command,1,1) == "/" then
-					extra = explode(" ", event.command, 2)
+					extra = explode("%s+", event.command, 3)
 					extra[1] = string.sub(string.lower(extra[1]), 2)
 				end
 			end
 			for _,v in pairs(self.hooks[name]) do
 				-- If callback successful, stop looping for more hooks
+				-- NOTE: extra[1] or nil is a necessary luaj bug work-around
 				if v.callback(event, table.unpack(extra)) then
 					break
 				end
@@ -197,10 +198,10 @@ ModBase = {
 		-- Default help command processor
 		self.commands = {
 			help = {
-				callback = function(event, command, ...)
-					if command then
-						if self.commands[command] and self.commands[command]['help'] then
-							ModManager:sendPlayerCommandHelp(event.player, command, self.commands[command].help)
+				callback = function(event, command, action, ...)
+					if action then
+						if self.commands[action] and self.commands[action]['help'] then
+							ModManager:sendPlayerCommandHelp(event.player, action, self.commands[action].help)
 							-- Tell ModManager the command request has been fulfilled
 							return true
 						end
@@ -215,8 +216,8 @@ ModBase = {
 		self.events = {
 			PlayerCommand = {
 				callback = function(event, command, ...)
-					if self.commands[command] then
-						self.commands[command].callback(event, ...)
+					if self.commands[command] and self.commands[command].callback then
+						self.commands[command].callback(event, command, ...)
 					end
 				end,
 			}

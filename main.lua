@@ -5,10 +5,14 @@ include("support.lua")
 
 include("modmanager.lua")
 
+include("mods/Controller.lua")
 include("mods/WelcomeMessage.lua")
 include("mods/Motd.lua")
 
 ModManager:init()
+
+Controller = modController.new()
+Controller:attach(ModManager)
 
 WelcomeMessage = modWelcomeMessage.new()
 WelcomeMessage:attach(ModManager)

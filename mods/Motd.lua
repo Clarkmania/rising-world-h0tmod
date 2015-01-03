@@ -36,7 +36,7 @@ modMotd = {
 				event.player:sendTextMessage("motd set")
 			end,
 			help = {
-				"/setmotd <message>"
+				"<message>"
 			}
 		}
 

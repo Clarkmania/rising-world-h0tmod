@@ -152,20 +152,20 @@ ModManager = {
 		end
 	end,
 
-	sendPlayerCommandHelp = function(self,player,text)
+	sendPlayerCommandHelp = function(self,player,name,text)
 		if type(text) == "table" then
 			for _,v in ipairs(text) do
-				player:sendTextMessage("[#00A5A5]> " .. v)
+				player:sendTextMessage("[#00C5C5]/" .. name .. " [#00B5B5]" .. v)
 			end
 		else
-			player:sendTextMessage("[#00A5A5]> " .. text)
+			player:sendTextMessage("[#00C5C5]/" .. name .. " [#00B5B5]" .. text)
 		end
 	end,
 
 	sendPlayerCommandList = function(self,player,commandlist)
 		for v,_ in pairs(commandlist) do
 			if v ~= "help" then
-				player:sendTextMessage("[#00A5A5]> " .. v)
+				player:sendTextMessage("[#00C5C5]/" .. v)
 			end
 		end
 	end,
@@ -200,7 +200,7 @@ ModBase = {
 				callback = function(event, command, ...)
 					if command then
 						if self.commands[command] and self.commands[command]['help'] then
-							ModManager:sendPlayerCommandHelp(event.player, self.commands[command].help)
+							ModManager:sendPlayerCommandHelp(event.player, command, self.commands[command].help)
 							-- Tell ModManager the command request has been fulfilled
 							return true
 						end

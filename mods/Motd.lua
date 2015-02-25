@@ -48,7 +48,7 @@ modMotd = {
 				else
 					ModManager:sendPlayerCommandHelp(event.player, command, "Invalid command usage, see /help " .. command)
 				end
-				return true
+				return CALLBACK_HANDLED
 			end,
 			help = {
 				"set <message>",

@@ -49,6 +49,8 @@ EVENTS = {
 	"UpdateEvent",
 }
 
+CALLBACK_HANDLED = 1 -- Stop processing event callbacks
+
 ModManager = {
 	hooks = {},
 	plugins = {},
@@ -146,7 +148,7 @@ ModManager = {
 			for _,v in pairs(self.hooks[name]) do
 				-- If callback successful, stop looping for more hooks
 				-- NOTE: extra[1] or nil is a necessary luaj bug work-around
-				if v.callback(event, table.unpack(extra)) then
+				if v.callback(event, table.unpack(extra)) == CALLBACK_HANDLED then
 					break
 				end
 			end
@@ -203,7 +205,7 @@ ModBase = {
 						if self.commands[action] and self.commands[action]['help'] then
 							ModManager:sendPlayerCommandHelp(event.player, action, self.commands[action].help)
 							-- Tell ModManager the command request has been fulfilled
-							return true
+							return CALLBACK_HANDLED
 						end
 					else
 						ModManager:sendPlayerCommandList(event.player, self.commands)

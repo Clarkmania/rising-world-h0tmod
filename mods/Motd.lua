@@ -38,13 +38,17 @@ modMotd = {
 				if not action then
 					event.player:sendTextMessage(self:prettyMotd())
 				elseif action == "broadcast" then
-					self:broadcastMotd()
+					if ModManager:hasPermission(event.player, PERM_ADMIN) then
+						self:broadcastMotd()
+					end
 				elseif action == "list" then
 					-- TODO
 					ModManager:sendPlayerCommandHelp(event.player, command, "list not implemented yet")
 				elseif action == "set" and message then
-					db:queryupdate("INSERT INTO motd (time, message) VALUES (strftime('%s', 'now'), '" .. message .. "')")
-					event.player:sendTextMessage("motd set")
+					if ModManager:hasPermission(event.player, PERM_ADMIN) then
+						db:queryupdate("INSERT INTO motd (time, message) VALUES (strftime('%s', 'now'), '" .. message .. "')")
+						event.player:sendTextMessage("motd set")
+					end
 				else
 					ModManager:sendPlayerCommandHelp(event.player, command, "Invalid command usage, see /help " .. command)
 				end

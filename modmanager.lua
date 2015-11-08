@@ -51,6 +51,8 @@ EVENTS = {
 
 CALLBACK_HANDLED = 1 -- Stop processing event callbacks
 
+PERM_ADMIN = 2
+
 ModManager = {
 	hooks = {},
 	plugins = {},
@@ -171,6 +173,14 @@ ModManager = {
 				player:sendTextMessage("[#00C5C5]/" .. v)
 			end
 		end
+	end,
+
+	hasPermission = function(self, player, perm)
+		if perm == PERM_ADMIN and player:isAdmin() then
+			return true
+		end
+		player:sendTextMessage("[#CC0000]permission denied")
+		return false
 	end,
 
 	log = function(self,...)
